@@ -1,0 +1,55 @@
+name: Twitter（X）downloader
+run-name: 動画DL ${{ inputs.request_id }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      urls:
+        description: "ツイートのURL(複数ある場合はスペース区切り)"
+        required: true
+        type: string
+      request_id:
+        description: "Webページから使う識別子(手動実行では空でOK)"
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 依存関係をインストール
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+          pip install -U -r requirements.txt
+
+      # 任意: リポジトリの Secrets に TWITTER_COOKIES (cookies.txt の中身) を入れると
+      # ログインが必要な動画も取得できます
+      - name: Cookieを準備
+        env:
+          COOKIES: ${{ secrets.TWITTER_COOKIES }}
+        run: |
+          if [ -n "$COOKIES" ]; then printf '%s' "$COOKIES" > cookies.txt; echo "COOKIE_ARG=-c cookies.txt" >> "$GITHUB_ENV"; fi
+
+      - name: ダウンロード
+        env:
+          URLS: ${{ inputs.urls }}
+        run: python twdl.py -o downloads $COOKIE_ARG $URLS
+
+      - name: 動画をアップロード
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: twitter-videos
+          path: downloads/
+          retention-days: 7
+          if-no-files-found: warn

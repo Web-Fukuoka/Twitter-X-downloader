@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f1419">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Twitter（X）downloader</title>
+<style>
+:root{--bg:#f5f6f7;--card:#fff;--text:#0f1419;--sub:#536471;--line:#e1e5e8;--accent:#1d9bf0;--accent-d:#1a8cd8;--ok:#00a35c;--ng:#e0245e;--field:#f7f9f9}
+@media (prefers-color-scheme:dark){:root{--bg:#000;--card:#16181c;--text:#e7e9ea;--sub:#8b98a5;--line:#2f3336;--field:#202327}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;line-height:1.6}
+main{max-width:520px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 32px)}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+h1{font-size:20px;margin:0;font-weight:700}
+.icon-btn{background:none;border:none;color:var(--sub);padding:8px;border-radius:50%;cursor:pointer}
+.icon-btn svg{width:24px;height:24px;display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px}
+label{display:block;font-size:13px;color:var(--sub);margin:0 0 6px}
+textarea,input{width:100%;font:inherit;font-size:16px;color:var(--text);background:var(--field);border:1px solid var(--line);border-radius:12px;padding:12px;outline:none}
+textarea{min-height:96px;resize:vertical}
+textarea:focus,input:focus{border-color:var(--accent)}
+.row{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;font:inherit;font-size:16px;font-weight:700;border:none;border-radius:999px;padding:14px;cursor:pointer;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}
+.btn:active{background:var(--accent-d)}
+.btn.sub{background:transparent;color:var(--text);border:1px solid var(--line);font-weight:500;flex:0 0 auto;padding:14px 18px}
+.btn:disabled{opacity:.5}
+.err{color:var(--ng);font-size:13px;margin:8px 0 0;min-height:0}
+.err:empty{display:none}
+.hint{font-size:12px;color:var(--sub);margin:8px 0 0}
+.hint a{color:var(--accent)}
+.status{display:flex;align-items:center;gap:12px}
+.spin{width:22px;height:22px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:s 0.8s linear infinite;flex:none}
+@keyframes s{to{transform:rotate(360deg)}}
+.steps{list-style:none;margin:12px 0 0;padding:0;font-size:14px}
+.steps li{display:flex;align-items:center;gap:8px;color:var(--sub);padding:3px 0}
+.steps li.done{color:var(--text)}
+.steps li.now{color:var(--text);font-weight:700}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--line);flex:none}
+.done .dot{background:var(--ok)}
+.now .dot{background:var(--accent)}
+.vid{margin-top:12px}
+.vid video{width:100%;border-radius:12px;background:#000;max-height:60vh}
+.vid .name{font-size:12px;color:var(--sub);word-break:break-all;margin:4px 0 0}
+.hidden{display:none!important}
+.setup h2{font-size:16px;margin:0 0 12px}
+.setup .f{margin-bottom:12px}
+ol.guide a{color:var(--accent)}
+ol.guide{font-size:13px;color:var(--sub);padding-left:20px;margin:0 0 12px}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Twitter（X）downloader</h1>
+    <button class="icon-btn" id="openSettings" aria-label="設定">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+    </button>
+  </header>
+
+  <!-- 初期設定 -->
+  <section class="card setup hidden" id="setup">
+    <h2>はじめの設定(1回だけ)</h2>
+    <ol class="guide">
+      <li><a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GitHubのトークン作成ページ</a>を開く</li>
+      <li>Repository access で<b>このリポジトリだけ</b>を選ぶ</li>
+      <li>Permissions の <b>Actions</b> を「Read and write」にして作成</li>
+      <li>表示されたトークンを下に貼る</li>
+    </ol>
+    <div class="f"><label for="repo">リポジトリ(ユーザー名/リポジトリ名)</label><input id="repo" placeholder="yourname/twitter-x-downloader" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
+    <div class="f"><label for="token">トークン</label><input id="token" type="password" placeholder="github_pat_..." autocapitalize="off" autocorrect="off" spellcheck="false"></div>
+    <div class="row"><button class="btn" id="saveSettings">保存</button></div>
+    <p class="err" id="setupErr"></p>
+    <p class="hint">トークンはこの端末のブラウザ内にだけ保存され、GitHub以外には送信されません。</p>
+  </section>
+
+  <!-- 入力 -->
+  <section class="card" id="form">
+    <label for="urls">ツイートのURL</label>
+    <textarea id="urls" placeholder="https://x.com/user/status/1234567890" autocapitalize="off" autocorrect="off" spellcheck="false"></textarea>
+    <div class="row">
+      <button class="btn sub" id="paste">貼り付け</button>
+      <button class="btn" id="go">ダウンロード</button>
+    </div>
+    <p class="err" id="formErr"></p>
+    <p class="hint">複数あるときは改行で区切ってください。</p>
+  </section>
+
+  <!-- 進行状況 -->
+  <section class="card hidden" id="progress">
+    <div class="status"><div class="spin" id="spin"></div><div id="statusText">準備中…</div></div>
+    <ul class="steps" id="steps">
+      <li data-k="dispatch"><span class="dot"></span>依頼を送信</li>
+      <li data-k="queued"><span class="dot"></span>GitHubの順番待ち</li>
+      <li data-k="running"><span class="dot"></span>動画をダウンロード中</li>
+      <li data-k="fetch"><span class="dot"></span>スマホに転送</li>
+    </ul>
+    <div id="result"></div>
+    <div class="row hidden" id="actions">
+      <a class="btn sub" id="runLink" target="_blank" rel="noopener">GitHubで見る</a>
+      <button class="btn" id="again">別の動画</button>
+    </div>
+  </section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+const WORKFLOW = "download.yml";
+const API = "https://api.github.com";
+const $ = (id) => document.getElementById(id);
+const URL_RE = /^https?:\/\/(www\.|mobile\.)?(twitter\.com|x\.com)\/[^/]+\/status\/\d+/i;
+const store = {
+  get(k){ try { return localStorage.getItem(k) || ""; } catch { return ""; } },
+  set(k,v){ try { localStorage.setItem(k, v); } catch {} },
+};
+
+// GitHub Pages (user.github.io/repo/) から開いた場合はリポジトリを自動入力
+function guessRepo(){
+  const m = location.hostname.match(/^([^.]+)\.github\.io$/i);
+  const p = location.pathname.split("/").filter(Boolean)[0];
+  return m && p ? `${m[1]}/${p}` : "";
+}
+
+function cfg(){ return { repo: store.get("twdl_repo"), token: store.get("twdl_token") }; }
+
+function showSetup(show){
+  $("setup").classList.toggle("hidden", !show);
+  if (show){ $("repo").value = cfg().repo || guessRepo(); $("token").value = cfg().token; }
+}
+
+async function gh(path, opts = {}){
+  const { token } = cfg();
+  const res = await fetch(API + path, {
+    ...opts,
+    headers: { "Accept": "application/vnd.github+json", "Authorization": `Bearer ${token}`, "X-GitHub-Api-Version": "2022-11-28", ...(opts.headers || {}) },
+  });
+  if (!res.ok){
+    let msg = `${res.status}`;
+    try { msg += " " + (await res.json()).message; } catch {}
+    if (res.status === 401) msg = "トークンが無効です。設定を確認してください。";
+    if (res.status === 404) msg = "リポジトリまたはワークフローが見つかりません(トークンの権限も確認してください)。";
+    if (res.status === 403) msg = "権限が足りません。トークンの Actions を Read and write にしてください。";
+    throw new Error(msg);
+  }
+  return res;
+}
+
+$("openSettings").onclick = () => showSetup($("setup").classList.contains("hidden"));
+$("saveSettings").onclick = async () => {
+  const repo = $("repo").value.trim().replace(/^https?:\/\/github\.com\//, "").replace(/\/$/, "");
+  const token = $("token").value.trim();
+  $("setupErr").textContent = "";
+  if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) return $("setupErr").textContent = "「ユーザー名/リポジトリ名」の形で入力してください。";
+  if (!token) return $("setupErr").textContent = "トークンを入力してください。";
+  store.set("twdl_repo", repo); store.set("twdl_token", token);
+  try {
+    await gh(`/repos/${repo}/actions/workflows/${WORKFLOW}`);
+    showSetup(false);
+  } catch (e) { $("setupErr").textContent = e.message; }
+};
+
+$("paste").onclick = async () => {
+  try {
+    const t = await navigator.clipboard.readText();
+    if (t) $("urls").value = ($("urls").value.trim() + "\n" + t.trim()).trim();
+  } catch { $("formErr").textContent = "貼り付けできませんでした。長押しで貼り付けてください。"; }
+};
+$("urls").oninput = () => $("formErr").textContent = "";
+
+function setStep(k, text){
+  const keys = ["dispatch","queued","running","fetch"];
+  const i = keys.indexOf(k);
+  document.querySelectorAll("#steps li").forEach((li, j) => {
+    li.className = j < i ? "done" : j === i ? "now" : "";
+  });
+  if (text) $("statusText").textContent = text;
+}
+function finish(text, ok){
+  $("spin").classList.add("hidden");
+  $("statusText").textContent = text;
+  $("statusText").style.color = ok ? "" : "var(--ng)";
+  $("actions").classList.remove("hidden");
+  if (ok) document.querySelectorAll("#steps li").forEach(li => li.className = "done");
+}
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+$("again").onclick = () => {
+  $("progress").classList.add("hidden");
+  $("form").classList.remove("hidden");
+  $("urls").value = ""; $("urls").focus();
+};
+
+$("go").onclick = async () => {
+  const { repo, token } = cfg();
+  if (!repo || !token) return showSetup(true);
+  const urls = $("urls").value.split(/\s+/).map(s => s.trim().split("?")[0]).filter(Boolean);
+  if (!urls.length) return $("formErr").textContent = "URLを入力してください。";
+  const bad = urls.filter(u => !URL_RE.test(u));
+  if (bad.length) return $("formErr").textContent = `ツイートのURLではありません: ${bad[0]}`;
+
+  $("form").classList.add("hidden");
+  $("progress").classList.remove("hidden");
+  $("spin").classList.remove("hidden");
+  $("statusText").style.color = "";
+  $("actions").classList.add("hidden");
+  $("result").innerHTML = "";
+  $("runLink").href = `https://github.com/${repo}/actions/workflows/${WORKFLOW}`;
+
+  try {
+    // 1. 依頼を送信
+    setStep("dispatch", "依頼を送信しています…");
+    const branch = (await (await gh(`/repos/${repo}`)).json()).default_branch;
+    const reqId = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    const since = new Date(Date.now() - 60000).toISOString();
+    await gh(`/repos/${repo}/actions/workflows/${WORKFLOW}/dispatches`, {
+      method: "POST",
+      body: JSON.stringify({ ref: branch, inputs: { urls: urls.join(" "), request_id: reqId } }),
+    });
+
+    // 2. 実行を探す
+    setStep("queued", "GitHubが処理を始めるのを待っています…");
+    let run = null;
+    for (let i = 0; i < 40 && !run; i++){
+      await sleep(3000);
+      const data = await (await gh(`/repos/${repo}/actions/workflows/${WORKFLOW}/runs?event=workflow_dispatch&created=%3E%3D${since}&per_page=20`)).json();
+      run = data.workflow_runs.find(r => (r.display_title || "").endsWith(reqId));
+    }
+    if (!run) throw new Error("実行が見つかりませんでした。GitHubのActionsタブを確認してください。");
+    $("runLink").href = run.html_url;
+
+    // 3. 完了まで待つ
+    const t0 = Date.now();
+    while (run.status !== "completed"){
+      if (run.status === "in_progress") setStep("running", `動画をダウンロード中… ${Math.round((Date.now() - t0) / 1000)}秒`);
+      await sleep(4000);
+      run = await (await gh(`/repos/${repo}/actions/runs/${run.id}`)).json();
+      if (Date.now() - t0 > 15 * 60000) throw new Error("時間がかかりすぎています。GitHubで状況を確認してください。");
+    }
+
+    // 4. 動画を取得
+    setStep("fetch", "スマホに転送しています…");
+    const arts = (await (await gh(`/repos/${repo}/actions/runs/${run.id}/artifacts`)).json()).artifacts;
+    if (!arts.length) throw new Error("動画を取得できませんでした。URLが正しいか、動画付きのツイートか確認してください。");
+
+    let files = [];
+    try {
+      const blob = await (await gh(`/repos/${repo}/actions/artifacts/${arts[0].id}/zip`)).blob();
+      const zip = await JSZip.loadAsync(blob);
+      for (const f of Object.values(zip.files)){
+        if (!f.dir && /\.(mp4|webm|mov|m4v)$/i.test(f.name)){
+          files.push({ name: f.name.split("/").pop(), blob: new Blob([await f.async("uint8array")], { type: "video/mp4" }) });
+        }
+      }
+    } catch (e) {
+      // ブラウザから直接取得できない場合はGitHubのページへ案内
+      finish("完了しました。「GitHubで見る」からzipを保存してください。", true);
+      return;
+    }
+    if (!files.length) throw new Error("動画が見つかりませんでした。");
+
+    files.forEach(renderVideo);
+    const partial = run.conclusion !== "success";
+    finish(partial ? `${files.length}本保存できました(一部失敗)` : `${files.length}本の動画を取得しました`, true);
+  } catch (e) {
+    finish(e.message, false);
+  }
+};
+
+function renderVideo({ name, blob }){
+  const url = URL.createObjectURL(blob);
+  const box = document.createElement("div");
+  box.className = "vid";
+  const v = document.createElement("video");
+  v.src = url; v.controls = true; v.playsInline = true; v.preload = "metadata";
+  const p = document.createElement("p"); p.className = "name"; p.textContent = name;
+  const row = document.createElement("div"); row.className = "row";
+  const save = document.createElement("button"); save.className = "btn"; save.textContent = "保存";
+  save.onclick = async () => {
+    const file = new File([blob], name, { type: "video/mp4" });
+    // iPhone/Android: 共有シートから「ビデオを保存」できる
+    if (navigator.canShare && navigator.canShare({ files: [file] })){
+      try { await navigator.share({ files: [file] }); return; } catch (e) { if (e.name === "AbortError") return; }
+    }
+    const a = document.createElement("a"); a.href = url; a.download = name; a.click();
+  };
+  row.appendChild(save);
+  box.append(v, p, row);
+  $("result").appendChild(box);
+}
+
+if (!cfg().repo || !cfg().token) showSetup(true);
+</script>
+</body>
+</html>
